@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  mysqldb:
+    platform: linux/x86_64
+    image: mysql:5.7
+    restart: always
+    env_file: ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_DATABASE: $MYSQL_DATABASE
+    ports:
+      - $MYSQL_LOCAL_PORT:$MYSQL_DOCKER_PORT
+    volumes:
+      - db-config:/etc/mysql
+      - db-data:/var/lib/mysql
+      - ./db/backup/files/:/data_backup/data
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    image: node-mysql-app
+    command: npm run dev
+    env_file: ./.env
+    restart: always
+    ports:
+      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+    volumes:
+      - "./api:${DOCKER_PATH}/api"
+      - "${DOCKER_PATH}/api/node_modules"
+    depends_on:
+      - mysqldb
+
+#  web_app:
+#   build:
+#      context: ./web_app
+#      dockerfile: Dockerfile
+#    image: web-app
+#    command: npm run dev
+#    restart: always
+#    env_file: ./.env
+#    ports:
+#      - $WEB_APP_LOCAL_PORT:$WEB_APP_DOCKER_PORT
+#    volumes:
+#      - "./web_app:${DOCKER_PATH}/web_app"
+#      - "${DOCKER_PATH}/web_app/node_modules"
+#    depends_on:
+#      - mysqldb
+#      - api
+
+volumes:
+  db-config:
+  db-data:
